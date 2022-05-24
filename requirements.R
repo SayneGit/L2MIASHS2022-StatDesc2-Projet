@@ -16,9 +16,15 @@ pkgLoad <- function( packages = "favourites" ) {
       "psych",
       "ROSE",
       "rpart",
-      "rpart.plot"
+      "rpart.plot",
+      "gbm",
+      "neuralnet",
+      "plyr",
+      "matrixStats",
+      "boot",
+      "leaps"
     )
-  }
+}
   
   packagecheck <- match( packages, utils::installed.packages()[, 1] )
   
