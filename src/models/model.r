@@ -1,81 +1,86 @@
-#### III - Sélection du meilleur modèle ####
+# I - Modèles linéaires multiples et logistiques ####
 
 library(leaps)
-#### 1. Modèle de départ (constante uniquement) ###
+## 1. Modèle de départ (constante uniquement) ###
 modele.min = lm(isFraud ~ 1, data = train) 
 modele.min$coefficients
 
-#### 2. Modèle complet (maximal) ####
+## 2. Modèle complet (maximal) ####
 
 model.test = lm(train2$amount ~ train2$nameOrig + train2$nameDest, data = train2)
 
 modele.max = lm(isFraud ~ ., data = train) 
 modele.max$coefficients
 
-#### 3. Méthode descendante avec AIC ####
+## 3. Méthode descendante avec AIC ####
 # step(modele.max, data = train, direction = "backward")
 
 # Méthode ascendante avec AIC
 step(modele.min, scope=list(lower = modele.min, upper = modele.max), data = train, direction = "forward")
 
-#### III - Régression logistique multiple ####
+# II - Régression logistique multiple ####
 
-#### 1. Modèle complet ####
+## 1. Modèle complet ####
 modele.log.max = glm(isFraud ~ ., data = train, family = binomial)
 
-#### Informations sur le modèle ####
+### Informations sur le modèle ####
 summary(modele.log.max)
 
-#### 2. Autres modèles ####
+## 2. Autres modèles ####
+### Modèle des noms (émeteur et destinateur)
+modele_log_name = glm(isFraud ~ nameOrig + nameDest, data = train, family = binomial)
+summary(modele_log_name)
 
-#### Modèle : Cholesterol ####
-modele.log.1 = glm(df$Diabete ~ df$Cholesterol, data = df, family = binomial)
-summary(modele.log.1)
+### Modèle basé sur le type
+modele_log_type = glm(isFraud ~ type, data = train, family = binomial)
+summary(modele_log_type)
 
-#### 3. Méthode descendante avec AIC ####
+
+## 3. Méthode descendante avec AIC ####
 step(modele.log.max, data = train, direction = "backward")
 
-#### PARTIE II ####
+# III - Régression Lasso ####
 
-#### I - Chargement des données ####
+## 1. Chargement des données ####
 
 # Modèle de type lasso
 library(glmnet)
 
 # Données
-library(MASS)
 data <- train
 summary(data)
 
-#### II - Sélection des données ####
+## 2. Sélection des données ####
 
-#### 1. Échantillon ####
-samplesize = 0.70 * nrow(data)
-set.seed(1212)
-index = sample(seq_len(nrow(data)), size = samplesize)
+## 3. Données centrées réduites ####
 
-#### 2. Données centrées réduites ####
-data.X.std <- scale(data[index,names(data)!="medv"])
+train_std <- train
+train_std$amount <- scale(train_std$amount)
+train_X_std <- dplyr::select(train_std, isFraud)
+train_Y_std <- dplyr::select(train_std, type, amount, nameOrig, nameDest)
 
-#### 3. Jeu de données pour entraînement (Training) et validation (Test) ####
-X.train <- as.matrix(data.X.std)
-X.test <- as.matrix(scale(data[-index,names(data)!="medv"],
-                          attr(data.X.std, "scaled:center"),
-                          attr(data.X.std, "scaled:scale"))) 
-Y.train <- data[index, "medv"]
-Y.test <- data[-index, "medv"]
+test_std <- test
+test_std$amount <- scale(test_std$amount)
+test_X_std <- dplyr::select(test_std, isFraud)
+test_Y_std <- dplyr::select(test_std, type, amount, nameOrig, nameDest)
 
-#### III - Apprentissage ####
+## 4. Jeu de données pour entraînement (Training) et validation (Test) ####
+X.train <- as.matrix(train_X_std)
+X.test <- as.matrix(test_X_std) 
+Y.train <- train_Y_std
+Y.test <- test_Y_std
 
-#### 1. Influence du paramètre λ ####
+# IV - Apprentissage ####
+
+## 1. Influence du paramètre λ ####
 lasso.fit<- glmnet(x = X.train, y = Y.train, family = "gaussian", alpha = 1) 
 plot(lasso.fit, xvar = "lambda", label = TRUE, main = "Évolution des coefficients de régression en fonction de λ\n")
 
-#### 2. Recherche du meilleur λ ####
+## 2. Recherche du meilleur λ ####
 # Sans lambda prédéfinis
 #lasso.cv <- cv.glmnet(x=X.train, y=Y.train, family = "gaussian", alpha = 1, nfolds = 5)
 
-# Sélection parmi des lambdas prédéfinis
+### Sélection parmi des lambdas prédéfinis
 lambda = c(10^(-4), 2*10^(-4), 2*10^(-4), 5*10^(-4), 7*10^(-4), 10^(-3), 2*10^(-3), 5*10^(-3), 10^(-2), 5*10^(-2), 10^(-1), 0.5, 1, 2, 5, 10, 20, 50, 100)
 lasso.cv <- cv.glmnet(x=X.train, y=Y.train, family = "gaussian", alpha = 1, lambda = lambda, nfolds = 5)
 plot(lasso.cv)
@@ -92,7 +97,7 @@ lasso.cv$lambda.1se
 lasso.fit01<- glmnet(x = X.train, y = Y.train, family = "gaussian", alpha = 1, lambda = 0.1)
 lasso.fit01$beta
 
-#### 3. Évaluation des performances ####
+## 3. Évaluation des performances ####
 pred.lasso.train <- predict(lasso.fit, newx = X.train, s=lasso.cv$lambda.min)
 pred.lasso.min <- predict(lasso.fit, newx = X.test, s=lasso.cv$lambda.min)
 pred.lasso.1se <- predict(lasso.fit, newx = X.test, s=lasso.cv$lambda.1se)
@@ -101,7 +106,7 @@ pred.lasso.1se <- predict(lasso.fit, newx = X.test, s=lasso.cv$lambda.1se)
 MSE.lasso <- mean((Y.train-pred.lasso.train)^2)
 MSE.lasso.test <- mean((Y.test-pred.lasso.1se)^2)
 
-#### 4. Modèle de régression multiple complet ####
+## 4. Modèle de régression multiple complet ####
 modele.multi.max <- lm(data$medv ~ ., data = data) 
 
 # Méthode descendante

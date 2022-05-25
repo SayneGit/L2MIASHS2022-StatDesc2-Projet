@@ -7,18 +7,17 @@ library(neuralnet)
 
 ## b) Modèle
 set.seed(2)
-NN = neuralnet(isFraud ~ amount + nameOrig + nameDest + type, train, hidden = 3, linear.output = T)
+NN = neuralnet(isFraud ~ amount + nameOrig + nameDest, train, hidden = 4, linear.output = T)
 plot(NN)
 
 
 # c) Erreur Quadratique Moyenne
 #Root Mean Square Error
-RMSE.NN = (sum(datatest$rating - predict_testNN)^2) / nrow(datatest) ^ 0.5
+# ------------------
 
 # 2. Cross Validation du modèle de réseau neuronal ####
 
 # a) Bibliothèques
-
 
 # b) Intialisation des variables
 set.seed(50)
@@ -47,6 +46,7 @@ for(j in 10:65){
   list[[j]] = RMSE.NN
 }
 
+
 # b) Matrice
 matrix.RMSE = do.call(cbind, list)
 
@@ -54,7 +54,6 @@ matrix.RMSE = do.call(cbind, list)
 boxplot(matrix.RMSE[,56], ylab = "EQM", main = "Graphique EQM (longueur du jeu de données : 65)", col="forestgreen")
 
 # 4. Variation de la médiane EQM ####
-
 
 
 ## b) Calcul de la médiane

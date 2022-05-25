@@ -16,38 +16,22 @@ df1 <- csv_to_disk.frame(
   backend = "data.table")
 
 
-train <- collect(sample_frac(df1, 0.05)) # Split avec un sample de 60% de df
+train <- collect(sample_frac(df1, 0.1)) # Split avec un sample de 10% de df
+df_full <- collect(sample_frac(df1, 1)) # df en entier
+diff <- setdiff(df_full, train) # Différence entre le df en entier (df2) et train pour récupérer les 90% restants
+test <- collect(sample_frac(diff, 0.05)) #
 
-train <- select(train, type, amount, nameOrig , nameDest, isFraud, isFlaggedFraud)
+rm(df_full)
+rm(diff)
+
+train <- dplyr::select(train, type, amount, nameOrig, nameDest, isFraud, isFlaggedFraud)
 
 train$type = as.numeric(as.factor(train$type))
 train$nameOrig = as.numeric(as.factor(train$nameOrig))
 train$nameDest = as.numeric(as.factor(train$nameDest))
 
-# ---------------- WIP ---------------- #
+test <- dplyr::select(test , type, amount, nameOrig, nameDest, isFraud, isFlaggedFraud)
 
-# df2 <- collect(sample_frac(df1, 1)) # df en entier
-# diff <- setdiff(df2, train) # Différence entre le df en entier (df2) et train pour récupérer les 40% restants
-# test <- collect(sample_frac(diff, 0.50)) # 20% (50% de la diff)
-# validation <- setdiff(diff, test) # 20%, diff des 50%
-
-# df2 <- select(df2, type, amount, nameOrig, oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest, isFraud, isFlaggedFraud) # Uniquement les variables intéressantes (WIP)
-# train <- select(train, type, amount, nameOrig, oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest, isFraud, isFlaggedFraud)# ""
-
-
-
-test <- select(test, type, amount, nameOrig, oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest, isFraud, isFlaggedFraud)# ""
-
-df2$isFraud <- factor(df2$isFraud) # Changement du type de variable pour isFraud
-train$isFraud <- factor(train$isFraud)
-test$isFraud <- factor(test$isFraud)
-diff$isFraud <- as.numeric(diff$isFraud)
-
-
-
-train$nameOrig <- as.factor(train$nameOrig)
-df2$type <- as.factor(df2$type) # Passage de la donnée qualitative en quantitative (1, 2, 3)
-train$type <- as.factor(train$type)
-test$type <- as.factor(test$type)
-
-
+test$type = as.numeric(as.factor(test$type))
+test$nameOrig = as.numeric(as.factor(test$nameOrig))
+test$nameDest = as.numeric(as.factor(test$nameDest))
