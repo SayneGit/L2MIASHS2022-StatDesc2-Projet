@@ -35,13 +35,13 @@ for(j in 10:65){
     
     trainNN = scaled[index,]
     testNN = scaled[-index,]
-    datatest = data[-index,]
+    datatest = train[-index,]
     
-    # NN = neuralnet(train$isFlaggedFraud ~ train$amount + train$type + train$nameOrig + train$oldbalanceDest  + train$oldbalanceOrg, hidden = 3, linear.output = T)
+    NN = neuralnet(train$isFlaggedFraud ~ train$amount + train$type + train$nameOrig + train$oldbalanceDest  + train$oldbalanceOrg, hidden = 3, linear.output = T)
     predict_testNN = compute(NN,testNN[,c(1:5)])
-    predict_testNN = (predict_testNN$net.result*(max(data$VD)-min(data$VD)))+min(data$VD)
+    predict_testNN = (predict_testNN$net.result*(max(dataset$isFraud)-min(dataset$isFraud)))+min(dataset$isFraud)
     
-    RMSE.NN [i]<- (sum((dataset$VD - predict_testNN)^2)/nrow(datatest))^0.5
+    RMSE.NN [i]<- (sum((dataset$isFraud - predict_testNN)^2)/nrow(dataset))^0.5
   }
   list[[j]] = RMSE.NN
 }
@@ -51,16 +51,17 @@ for(j in 10:65){
 matrix.RMSE = do.call(cbind, list)
 
 # c) Graphique
-boxplot(matrix.RMSE[,56], ylab = "EQM", main = "Graphique EQM (longueur du jeu de données : 65)", col="forestgreen")
+boxplot(matrix.RMSE[,56], ylab = "EQM", main = "Graphique EQM", col="lightblue")
 
 # 4. Variation de la médiane EQM ####
 
-
-## b) Calcul de la médiane
+## a) Calcul de la médiane
 med = colMedians(matrix.RMSE)
 
-## c) Jeu de données
+# à vcoir si ça run
+
+## b) Jeu de données
 X = seq(10,65)
 
-## d) Graphique
-plot(med ~ X, type="l", xlab = "longueur du jeu de données", ylab = "médiane EQM", main =" Variation de l'EQM en fonction de la longueur du jeu de données", col="forestgreen")
+## c) Graphique
+plot(med ~ X, type="l", xlab = "longueur du jeu de données", ylab = "médiane EQM", main =" Variation de l'EQM en fonction de la longueur du jeu de données", col="lightblue")

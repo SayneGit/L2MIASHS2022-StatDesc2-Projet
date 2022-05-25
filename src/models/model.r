@@ -27,14 +27,13 @@ modele.log.max = glm(isFraud ~ ., data = train, family = binomial)
 summary(modele.log.max)
 
 ## 2. Autres modèles ####
-### Modèle des noms (émeteur et destinateur)
+### Modèle des noms (émetteur et destinataire)
 modele_log_name = glm(isFraud ~ nameOrig + nameDest, data = train, family = binomial)
 summary(modele_log_name)
 
 ### Modèle basé sur le type
 modele_log_type = glm(isFraud ~ type, data = train, family = binomial)
 summary(modele_log_type)
-
 
 ## 3. Méthode descendante avec AIC ####
 step(modele.log.max, data = train, direction = "backward")
